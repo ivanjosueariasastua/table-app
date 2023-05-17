@@ -1,95 +1,127 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client"
+import axios from 'axios';
+import React from 'react'
+import { useState } from 'react'
+import { Pais } from '../interfaces/Pais';
+import './page.module.css'
+import { Loader } from 'rsuite';
+import IconButton from '@/shared/IconButton';
+import Swal from 'sweetalert2';
 
 export default function Home() {
+  const [data, setData] = useState<Pais[]>([])
+  const [termino, setTermino] = useState<string>('');
+  const [loading, setLoading] = useState<Boolean>(false)
+
+  const apiUrl = 'https://restcountries.com/v2';
+
+  const getInformation = async () => {
+    if (termino) {
+      setLoading(true)
+      axios({
+        method: 'GET',
+        url: `${apiUrl}/name/${termino}`
+      }).then((res) => {
+        setData(res.data)
+      }).catch((err) => {
+        console.log(err)
+      }).finally(() => {
+        setLoading(false)
+      })
+    }else{
+      Swal.fire({
+        title: 'Buscar País',
+        text: 'Debe ingresar un término de busqueda',
+        icon: 'warning',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#119627'
+      })
+    }
+  }
+
+  const formatNumber = (number: number): string => {
+    // Convierte el número a una cadena y elimina espacios en blanco
+    const numberString = number.toString().trim();
+
+    // Verifica si el número tiene decimales
+    const hasDecimal = numberString.includes(".");
+
+    // Separa la parte entera de la parte decimal (si existe)
+    let [integerPart, decimalPart] = hasDecimal ? numberString.split(".") : [numberString, ""];
+
+    // Agrega comas a la parte entera
+    integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    // Une la parte entera y la parte decimal (si existe)
+    const formattedNumber = hasDecimal ? `${integerPart}.${decimalPart}` : integerPart;
+
+    return formattedNumber;
+  }
+
+  const createRow = (pais: Pais) => {
+    return (
+      <tr>
+        <th>
+          <img style={{ maxWidth: 55 }} src={pais.flag} />
+        </th>
+        <th>{pais.name}</th>
+        <th>{pais.region}</th>
+        <th>{formatNumber(pais.population)}</th>
+        <th>{pais.numericCode}</th>
+      </tr>
+    )
+  }
+
+  if (loading) {
+    return (<Loader backdrop content="...Cargando" vertical size='lg' />)
+  }
+
+  console.log(loading, data)
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="container mt-5">
+      <h3 className='text-center'>Paises App</h3>
+      <hr />
+      <div className='row'>
+        <div className='col-xl-11 col-lg-11 col-md-10 col-sm-8 col-xs-12'>
+          <input type='text' className='form-control' placeholder='Ingrese un término de busqueda' value={termino} onChange={(e) => setTermino(e.target.value)} />
+        </div>
+        <div className='col-xl-1 col-lg-1 col-md-2 col-sm-4 col-xs-12'>
+          <IconButton type='text' className='btn btn-success' onClick={() => getInformation()} icon="bi bi-search" title="Buscar" />
         </div>
       </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <hr />
+      <div className='mt-5'>
+        <table className='table table-striped shadow'>
+          <thead className='table-dark'>
+            <tr>
+              <th>Bandera</th>
+              <th>Nombre</th>
+              <th>Region</th>
+              <th>Población</th>
+              <th>Código</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              data.map((pais: Pais) => {
+                return (
+                  createRow(pais)
+                )
+              })
+            }
+          </tbody>
+          <tfoot className='table-dark'>
+            <tr>
+              <th>Bandera</th>
+              <th>Nombre</th>
+              <th>Region</th>
+              <th>Población</th>
+              <th>Código</th>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   )
 }
